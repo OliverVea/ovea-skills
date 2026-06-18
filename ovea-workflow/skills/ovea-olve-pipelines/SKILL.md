@@ -45,6 +45,47 @@ Actions, not a generic CI concept). React accordingly:
   never in the repo. Referenced as `$SECRET:NAME`.
 - **Promotion gate** is operational state (block/unblock/re-promote a step), not git config.
 
+## Inspecting runs & logs (read-only HTTP API)
+
+The controller serves both a web UI and a JSON API. Use this to answer "did my push
+deploy?", "which step failed?", "why?" — without cluster access.
+
+- **Instance:** `https://pipelines-private.ovea.pro` (private host; reachable on Oliver's
+  network/Tailscale). Beta controller: `https://pipelines-beta.ovea.pro`. Use `curl -sSk`.
+- **Auth:** the read endpoints below are open from Oliver's network — no token needed. The
+  OpenAPI doc (`/openapi/v1.json`, `/swagger/v1/swagger.json`) is `401`-gated, so don't rely
+  on it to discover routes; use the verified list here.
+- **SPA-fallback gotcha:** unknown `/api/*` paths return **HTTP 200 with the SPA's HTML**
+  (body starts with `<`), not a 404. Real API responses are JSON — first char `{` or `[`.
+  If you get HTML back, the path is wrong, not empty.
+
+Verified endpoints:
+
+- `GET /api/pipelines` → `[{id,name}]`. Look up the pipeline id by name (e.g. `questionbank`).
+- `GET /api/jobs?pipelineId={id}` → `{items:[…]}`, newest first. Each job has `type`
+  (`production`|`processing`), a `productionStepId`/`processingStepId` (GUID), `status.type`
+  (`done`|`failed`|`running`|…), timestamps, a failure `reason`, and a `jobGroupId` (one run).
+- `GET /api/jobs/{jobId}` → single job detail.
+- `GET /api/jobs/{jobId}/logs` → that job's console output (JSON-encoded string). **This is the
+  log endpoint** — `/log`, `/output`, `/console` all fall through to the SPA.
+- `GET /api/pipelines/{id}/processing/promotions` → per processing-step `{processingStepId,
+  blocked}` (the promotion-gate state).
+- `GET /api/pipelines/{id}/artifact-bundles` → completed production bundles; **empty until a
+  production group fully succeeds** (a failed production step ⇒ no bundle ⇒ no deploy).
+
+The API does **not** return step *names* — only GUIDs. Map a step id to a name by its order in
+`.pipelines/config.yaml` (`productionSteps`/`processingSteps` are listed in order) or by the
+log content. Same step id across multiple jobs = the controller's retry/backoff attempts.
+
+Recipe — "confirm why a deploy didn't run":
+```
+qb=$(curl -sSk $BASE/api/pipelines | jq -r '.[]|select(.name=="questionbank").id')
+curl -sSk "$BASE/api/jobs?pipelineId=$qb"            # newest job first; find the failed one
+curl -sSk "$BASE/api/jobs/<failed-job-id>/logs"      # read the tail for the real error
+```
+A failed **production** step blocks **every** processing step (no beta, no prod) — so a red
+typecheck/test gate shows up as a failed production job with the processing steps never created.
+
 ## Don't
 
 - Don't treat `.pipelines/` as dead/example config — it's live deployment config.
