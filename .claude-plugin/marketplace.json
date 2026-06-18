@@ -1,0 +1,14 @@
+{
+  "name": "ovea-skills",
+  "owner": { "name": "Oliver Vea" },
+  "metadata": {
+    "description": "Oliver Vea's personal Claude Code workflow skills"
+  },
+  "plugins": [
+    {
+      "name": "ovea-workflow",
+      "source": "./ovea-workflow",
+      "description": "Personal workflow skills (self-igniting letters, handoffs, and other process helpers)"
+    }
+  ]
+}
