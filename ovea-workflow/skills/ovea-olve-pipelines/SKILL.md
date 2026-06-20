@@ -45,10 +45,29 @@ Actions, not a generic CI concept). React accordingly:
   never in the repo. Referenced as `$SECRET:NAME`.
 - **Promotion gate** is operational state (block/unblock/re-promote a step), not git config.
 
+## Interacting with a pipeline (CLI, API, or UI)
+
+Three ways to drive and inspect pipelines, in order of preference:
+
+1. **`pl` CLI — recommended.** The operator CLI. It's built and served by the instance itself
+   (no GitHub Releases), so install it straight from the controller:
+   - Linux: `curl -fsSL https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.sh | sh`
+   - Windows: `irm https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.ps1 | iex`
+
+   It defaults to the private instance over Tailscale — if you can reach the instance, you can
+   install and use it. Read commands need no auth (`pl pipeline list`, `pl job list`,
+   `pl job logs <id>`, `pl production list`, `pl processing list`, …); for mutating commands run
+   `pl login` first (browser OIDC). `pl --help` lists the full surface.
+2. **HTTP API** — for scripting/automation; this is what the CLI wraps. Read endpoints are open
+   from Oliver's network (see below); mutations need a bearer token.
+3. **Web UI** — the controller serves a SPA at the instance root
+   (<https://pipelines-private.ovea.pro>) for point-and-click inspection and the promotion gate.
+
 ## Inspecting runs & logs (read-only HTTP API)
 
 The controller serves both a web UI and a JSON API. Use this to answer "did my push
-deploy?", "which step failed?", "why?" — without cluster access.
+deploy?", "which step failed?", "why?" — without cluster access. (`pl job list` / `pl job logs`
+wrap these same endpoints if you prefer the CLI.)
 
 - **Instance:** `https://pipelines-private.ovea.pro` (private host; reachable on Oliver's
   network/Tailscale). Beta controller: `https://pipelines-beta.ovea.pro`. Use `curl -sSk`.
