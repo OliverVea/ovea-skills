@@ -52,8 +52,8 @@ Three ways to drive and inspect pipelines, in order of preference:
 
 1. **`pl` CLI — recommended.** The operator CLI. It's built and served by the instance itself
    (no GitHub Releases), so install it straight from the controller:
-   - Linux: `curl -fsSL https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.sh | sh`
-   - Windows: `irm https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.ps1 | iex`
+   - Linux: `curl -fsSL https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/bootstrap.sh | sh`
+   - Windows: `irm https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/bootstrap.ps1 | iex`
 
    It defaults to the private instance over Tailscale — if you can reach the instance, you can
    install and use it. Read commands need no auth (`pl pipeline list`, `pl job list`,
