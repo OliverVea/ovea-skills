@@ -31,8 +31,9 @@ Actions, not a generic CI concept). React accordingly:
 
 - **"set up a pipeline" / "add CD"** → add a `.pipelines/config.yaml` to the repo, then bind it.
   [`Olve.Template.Api`](https://github.com/OliverVea/Olve.Template.Api/tree/main/.pipelines)
-  ships a copy-me starter (Kaniko build + Helm deploy). The `Olve.Pipelines` repo's
-  `setup-pipeline` skill bootstraps the bound pipeline.
+  ships a copy-me starter (Kaniko build + Helm deploy). Bind it with `pl binding create
+  <owner/repo> --credentials-secret <key>` (then `pl secret set` its declared secrets); the
+  `Olve.Pipelines` repo's `setup-pipeline` skill wraps this as a full bootstrap runbook.
 - **"deploy" / "redeploy"** → usually just push to the bound branch; the deploy poll picks it up.
 - **questions about config schema, steps, secrets, promotion gates, triggers** → read the
   README / `/docs` rather than guessing. Don't reinvent the model from memory.
@@ -57,7 +58,11 @@ Three ways to drive and inspect pipelines, in order of preference:
    It defaults to the private instance over Tailscale — if you can reach the instance, you can
    install and use it. Read commands need no auth (`pl pipeline list`, `pl job list`,
    `pl job logs <id>`, `pl production list`, `pl processing list`, …); for mutating commands run
-   `pl login` first (browser OIDC). `pl --help` lists the full surface.
+   `pl login` first (browser OIDC, or `--device` over SSH). Bootstrap and GitOps management are
+   covered too: `pl binding create/get/status/set-credentials/set-trigger/reconcile` to bind a
+   repo and drive its reconcile, and `pl secret list/set/delete` to manage the pipeline's k8s
+   secret values — so a bound pipeline can be created and maintained entirely from the CLI.
+   `pl --help` lists the full surface.
 2. **HTTP API** — for scripting/automation; this is what the CLI wraps. Read endpoints are open
    from Oliver's network (see below); mutations need a bearer token.
 3. **Web UI** — the controller serves a SPA at the instance root
