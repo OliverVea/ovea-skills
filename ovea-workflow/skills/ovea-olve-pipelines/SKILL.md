@@ -20,9 +20,9 @@ you would a `.github/workflows/` directory for GitHub Actions.
 
 - `.pipelines/config.yaml` is the **single source of truth** for the pipeline's shape.
 - A reconcile loop polls the branch head (~5 min); pushing a commit redeploys automatically.
-- You never hand-author triggers or call config-mutation APIs — **shape is git-owned**, so to
-  change the build/deploy you edit `config.yaml` and push. (Operations like manual triggers,
-  job cancel, and the promotion gate are API-allowed.)
+- You never hand-author triggers or run shape-mutating commands — **shape is git-owned**, so to
+  change the build/deploy you edit `config.yaml` and push. (Operational actions — manual
+  triggers, job cancel, the promotion gate — are driven with the `pl` CLI.)
 
 ## When the user says "pipeline"
 
@@ -46,66 +46,52 @@ Actions, not a generic CI concept). React accordingly:
   never in the repo. Referenced as `$SECRET:NAME`.
 - **Promotion gate** is operational state (block/unblock/re-promote a step), not git config.
 
-## Interacting with a pipeline (CLI, API, or UI)
+## Driving & inspecting a pipeline — use `pl`
 
-Three ways to drive and inspect pipelines, in order of preference:
+**The `pl` CLI is the interface. Use it for everything** — bind, secrets, status, triggers,
+inspection. Don't call the HTTP API directly; `pl` wraps it (and handles auth, output, and the
+API's rough edges for you). A web UI exists at the instance root
+(<https://pipelines-private.ovea.pro>) for point-and-click inspection and the promotion gate.
 
-1. **`pl` CLI — recommended.** The operator CLI. It's built and served by the instance itself
-   (no GitHub Releases), so install it straight from the controller:
-   - Linux: `curl -fsSL https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.sh | sh`
-   - Windows: `irm https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.ps1 | iex`
+`pl` is built and served by the instance itself (no GitHub Releases), so install it straight
+from the controller:
 
-   It defaults to the private instance over Tailscale — if you can reach the instance, you can
-   install and use it. Read commands need no auth (`pl pipeline list`, `pl job list`,
-   `pl job logs <id>`, `pl production list`, `pl processing list`, …); for mutating commands run
-   `pl login` first (browser OIDC, or `--device` over SSH). Bootstrap and GitOps management are
-   covered too: `pl binding create/get/status/set-credentials/set-trigger/reconcile` to bind a
-   repo and drive its reconcile, and `pl secret list/set/delete` to manage the pipeline's k8s
-   secret values — so a bound pipeline can be created and maintained entirely from the CLI.
-   `pl --help` lists the full surface.
-2. **HTTP API** — for scripting/automation; this is what the CLI wraps. Read endpoints are open
-   from Oliver's network (see below); mutations need a bearer token.
-3. **Web UI** — the controller serves a SPA at the instance root
-   (<https://pipelines-private.ovea.pro>) for point-and-click inspection and the promotion gate.
+- Linux: `curl -fsSL https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.sh | sh`
+- Windows: `irm https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.ps1 | iex`
 
-## Inspecting runs & logs (read-only HTTP API)
+It defaults to the private instance over Tailscale — if you can reach the instance, you can
+install and use it. Read commands need no auth (`pl pipeline list`, `pl job list`,
+`pl job logs <id>`, `pl production list`, `pl processing list`, …); for mutating commands run
+`pl login` first (browser OIDC, or `--device` over SSH). Bootstrap and GitOps management are
+covered too: `pl binding create/get/status/set-credentials/set-trigger/reconcile` to bind a
+repo and drive its reconcile, and `pl secret list/set/delete` to manage the pipeline's k8s
+secret values — so a bound pipeline can be created and maintained entirely from the CLI.
+`pl --help` lists the full surface.
 
-The controller serves both a web UI and a JSON API. Use this to answer "did my push
-deploy?", "which step failed?", "why?" — without cluster access. (`pl job list` / `pl job logs`
-wrap these same endpoints if you prefer the CLI.)
+## Inspecting runs & logs (`pl`)
 
-- **Instance:** `https://pipelines-private.ovea.pro` (private host; reachable on Oliver's
-  network/Tailscale). Beta controller: `https://pipelines-beta.ovea.pro`. Use `curl -sSk`.
-- **Auth:** the read endpoints below are open from Oliver's network — no token needed. The
-  OpenAPI doc (`/openapi/v1.json`, `/swagger/v1/swagger.json`) is `401`-gated, so don't rely
-  on it to discover routes; use the verified list here.
-- **SPA-fallback gotcha:** unknown `/api/*` paths return **HTTP 200 with the SPA's HTML**
-  (body starts with `<`), not a 404. Real API responses are JSON — first char `{` or `[`.
-  If you get HTML back, the path is wrong, not empty.
+Answer "did my push deploy?", "which step failed?", "why?" with `pl` — no cluster access, and
+no auth for these reads (they work against the private instance over Tailscale; add
+`--api-url https://pipelines-beta.ovea.pro` to target beta):
 
-Verified endpoints:
+- `pl pipeline list` → pipelines with id + name. Find the one you care about (e.g. `questionbank`).
+- `pl job list --pipeline <id>` → that pipeline's jobs, newest first. Each shows type
+  (production|processing), status (done|failed|running|…), timings, and a failure reason.
+- `pl job get <jobId>` → single job detail.
+- `pl job logs <jobId>` → that job's console output (the real error tail).
+- `pl processing promotions <id>` → per-step promotion-gate state (blocked/open).
+- `pl bundle list <id>` → completed production bundles; **empty until a production group fully
+  succeeds** (a failed production step ⇒ no bundle ⇒ no deploy).
 
-- `GET /api/pipelines` → `[{id,name}]`. Look up the pipeline id by name (e.g. `questionbank`).
-- `GET /api/jobs?pipelineId={id}` → `{items:[…]}`, newest first. Each job has `type`
-  (`production`|`processing`), a `productionStepId`/`processingStepId` (GUID), `status.type`
-  (`done`|`failed`|`running`|…), timestamps, a failure `reason`, and a `jobGroupId` (one run).
-- `GET /api/jobs/{jobId}` → single job detail.
-- `GET /api/jobs/{jobId}/logs` → that job's console output (JSON-encoded string). **This is the
-  log endpoint** — `/log`, `/output`, `/console` all fall through to the SPA.
-- `GET /api/pipelines/{id}/processing/promotions` → per processing-step `{processingStepId,
-  blocked}` (the promotion-gate state).
-- `GET /api/pipelines/{id}/artifact-bundles` → completed production bundles; **empty until a
-  production group fully succeeds** (a failed production step ⇒ no bundle ⇒ no deploy).
-
-The API does **not** return step *names* — only GUIDs. Map a step id to a name by its order in
-`.pipelines/config.yaml` (`productionSteps`/`processingSteps` are listed in order) or by the
-log content. Same step id across multiple jobs = the controller's retry/backoff attempts.
+Add `--json` to any command for machine-readable output. Jobs reference steps by id (a GUID);
+map an id to a name by its order in `.pipelines/config.yaml` (`productionSteps`/`processingSteps`
+are listed in order). The same step id across multiple jobs = the controller's retry attempts.
 
 Recipe — "confirm why a deploy didn't run":
-```
-qb=$(curl -sSk $BASE/api/pipelines | jq -r '.[]|select(.name=="questionbank").id')
-curl -sSk "$BASE/api/jobs?pipelineId=$qb"            # newest job first; find the failed one
-curl -sSk "$BASE/api/jobs/<failed-job-id>/logs"      # read the tail for the real error
+```sh
+pl pipeline list                     # find the pipeline id by name
+pl job list --pipeline <id>          # newest first; spot the failed job
+pl job logs <failed-job-id>          # read the tail for the real error
 ```
 A failed **production** step blocks **every** processing step (no beta, no prod) — so a red
 typecheck/test gate shows up as a failed production job with the processing steps never created.
@@ -113,6 +99,9 @@ typecheck/test gate shows up as a failed production job with the processing step
 ## Don't
 
 - Don't treat `.pipelines/` as dead/example config — it's live deployment config.
-- Don't try to mutate pipeline shape over the API. Edit `config.yaml` and push.
+- Don't reach for the HTTP API or hand-rolled `curl`. Use `pl` for every operation — it's the
+  supported interface and wraps the API for you.
+- Don't try to mutate pipeline shape at all (no `pl` command or API does it) — edit `config.yaml`
+  and push.
 - Don't deep-dive the Olve.Pipelines source to answer a usage question — start from the README
   and `/docs`.
