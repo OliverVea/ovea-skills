@@ -32,8 +32,16 @@ The web UI is at each URL. Everything below assumes v2.
 
 1. **Use the `pl` CLI for everything.** Not `curl`, not the HTTP API, not `kubectl`: `pl` handles
    auth, naming (pipelines by name, runs as `<pipeline>#<run>`, steps as `#<run>/<step>`) and the
-   API's details. `pl help`, `pl <noun> --help`. Install: `curl -fsSL
-   https://pipelines-v2-private.ovea.pro/install.sh | sh` (v2 prod serves the current `pl`).
+   API's details. `pl help`, `pl <noun> --help`. If `pl` is missing or `pl wait` / `pl profile`
+   are unknown commands (an old or v1 `pl`), install the current one from v2 prod, which serves
+   the `pl` it was deployed with:
+   ```sh
+   curl -fsSL https://pipelines-v2-private.ovea.pro/install.sh | sh        # Linux → ~/.local/bin/pl
+   irm https://pipelines-v2-private.ovea.pro/install.ps1 | iex             # Windows
+   pl --version && pl profile list                                         # then rule 2 if not logged in
+   ```
+   It replaces `~/.local/bin/pl`; on a machine that still needs v1's `pl`, keep a copy under another
+   name first (e.g. `pl-v1`).
 2. **The user logs in, not you.** Login is an interactive OIDC device flow. Never handle tokens.
    If a command needs auth (mutations, secrets, step files), check `pl profile list`, and if the
    profile isn't logged in, ask the user to run it with the `!` prefix so the link lands in the
