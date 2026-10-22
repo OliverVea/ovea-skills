@@ -43,9 +43,9 @@ The web UI is at each URL. Everything below assumes v2.
    It replaces `~/.local/bin/pl`; on a machine that still needs v1's `pl`, keep a copy under another
    name first (e.g. `pl-v1`).
 2. **The user logs in, not you.** Login is an interactive OIDC device flow. Never handle tokens.
-   If a command needs auth (mutations, secrets, step files), check `pl profile list`, and if the
-   profile isn't logged in, ask the user to run it with the `!` prefix so the link lands in the
-   session:
+   Everything on prod needs a session, reads included (v2 beta allows anonymous reads). Check
+   `pl profile list`, and if the profile isn't logged in, ask the user to run it with the `!`
+   prefix so the link lands in the session:
    `! pl login --api-url https://pipelines-v2-private.ovea.pro` and
    `! pl login --profile beta --api-url https://pipelines-v2-beta.ovea.pro`.
    Tokens refresh themselves; expect to ask again only when a refresh fails.
@@ -53,8 +53,9 @@ The web UI is at each URL. Everything below assumes v2.
    (`pl pipeline list --profile beta`), or set `PIPELINES_PROFILE` for a shell. No flag means
    `default`. Don't edit `~/.pl`.
 4. **Wait with `pl wait`, never with hand-rolled poll loops.** It re-checks on the instance's live
-   events, exits 0 (succeeded), 1 (failed or can no longer happen) or 124 (`--timeout`), prints
-   the result on stdout and progress on stderr. Run it as a background task and act on the exit
+   events, exits 0 (succeeded), 1 (failed or can no longer happen), 2 (usage error) or 124
+   (`--timeout`), prints the result on stdout and progress on stderr. A superseded run is followed
+   to the run that superseded it (`--no-follow` to stop there). Run it as a background task and act on the exit
    code:
    ```sh
    pl wait push "<pipeline>" <sha> --until finished --timeout 60m   # the run of a pushed commit
@@ -63,9 +64,10 @@ The web UI is at each URL. Everything below assumes v2.
    pl wait reconcile "<pipeline>" <sha>                             # a pipeline-definition commit applied
    ```
 5. **Know what a push does before you push.** The pipeline's `onPush` in `.pipelines/pipeline.ts`
-   decides it (e.g. some pipelines deploy beta, smoke-test, then **prod** on every push). A newer
-   push **supersedes** a running automatic run (its unstarted steps never run), so batch commits
-   instead of pushing one by one while a deploy is in flight.
+   decides it (e.g. some pipelines deploy beta, smoke-test, then **prod** on every push). Runs
+   flow on concurrently: an older run keeps going while newer ones build behind it; only where two
+   runs' attempts of the same step are both waiting does the newer win (the older run is then
+   `Superseded`). Still batch related commits rather than pushing one by one.
 6. **Confirm before prod-affecting actions** (`pl trigger` with a prod input, `pl run continue`
    to promote, `pl step unblock`, `pl pipeline switch`, deleting secrets or pipelines) unless the
    user asked for exactly that.
