@@ -75,6 +75,10 @@ The web UI is at each URL. Everything below assumes v2.
    it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo. Every step needs a
    `description` (may be `""`). After pushing, `pl wait reconcile` the commit; a failed reconcile
    holds all runs of the pipeline until fixed, and shows in `pl binding status <pipeline>`.
+8. **Report the run with every change.** When you tell the user about a change that a push
+   deploys, name the run that carries it and where it is: `pl wait push "<pipeline>" <sha>` prints
+   `<pipeline>#<run>`; say e.g. "`Olve.Pipelines v2#36` (running)" or "#36, green through prod".
+   A newer push's run may be the one that carries your commit; say which.
 
 ## Reading state
 
