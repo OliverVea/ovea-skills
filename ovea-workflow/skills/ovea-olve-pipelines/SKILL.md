@@ -67,7 +67,7 @@ The web UI is at each URL. Everything below assumes v2.
    push **supersedes** a running automatic run (its unstarted steps never run), so batch commits
    instead of pushing one by one while a deploy is in flight.
 6. **Confirm before prod-affecting actions** (`pl trigger` with a prod input, `pl run continue`
-   to promote, `pl gate unblock`, `pl pipeline switch`, deleting secrets or pipelines) unless the
+   to promote, `pl step unblock`, `pl pipeline switch`, deleting secrets or pipelines) unless the
    user asked for exactly that.
 7. **Changing a pipeline** = edit `.pipelines/` and push; the shape is git-owned (no API changes
    it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo. Every step needs a
@@ -77,7 +77,7 @@ The web UI is at each URL. Everything below assumes v2.
 ## Reading state
 
 ```sh
-pl pipeline list                               # health, last run, active version, gates
+pl pipeline list                               # health, last run, active version, blocked steps
 pl run list "<pipeline>"                       # newest first
 pl run get "<pipeline>#<run>"                  # stages, each step's status and reason
 pl step logs "<pipeline>#<run>/<step>"         # the real error; --follow while running
@@ -96,7 +96,11 @@ Add `--json` for machine-readable output. A step shown as `excluded` wasn't part
   deployTo=prod` keeps completed stages and runs the rest.
 - **Retry a step**: `pl step rerun "<pipeline>#<run>/<step>" --continue`.
 - **Stop**: `pl step cancel …` / `pl run cancel …`.
-- **Gates** (hold runs before a step): `pl gate block|unblock "<pipeline>/<step>"`.
+- **Block a step** (`pl step block|unblock "<pipeline>/<step>"`, `pl step blocked "<pipeline>"`):
+  holds every run that reaches it. Only while working on the pipeline or its target, or in an
+  incident, and only when the user asks; unblock when done. Never use it as an approval step, and
+  don't unblock a step someone else blocked without asking. ("Gate" means a step that decides
+  whether a run goes on: tests, approval, visual regression.)
 - **Secrets**: `pl secret list "<pipeline>"`; set values from stdin or `--from-env` (never put a
   value on the command line or in output).
 
