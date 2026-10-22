@@ -1,107 +1,100 @@
 ---
 name: ovea-olve-pipelines
-description: Recognize and work with Olve.Pipelines, Oliver's homelab GitOps CD service. Use when a repo contains a `.pipelines/` directory (the marker that it deploys via Olve.Pipelines), when the user says "pipeline" / "the pipeline" / "deploy" in a homelab context, or when asked how CD/deployment works for one of Oliver's repos. Points to the authoritative docs rather than reimplementing them.
+description: How an agent works with Olve.Pipelines, Oliver's homelab GitOps CD service — recognizing a pipeline, driving it with the `pl` CLI, waiting for deploys, profiles and login, changing a pipeline safely. Use when a repo contains a `.pipelines/` directory, when the user says "pipeline" / "deploy" in a homelab context, or before running any `pl` command. Points to the instance's /docs for reference; this skill is the agent playbook.
 ---
 
-# Olve.Pipelines
+# Olve.Pipelines — agent playbook
 
-**Olve.Pipelines** is Oliver's lightweight GitOps CD service for his homelab. It builds and
-deploys repos by running their pipeline steps as Kubernetes Jobs.
+Olve.Pipelines builds and deploys Oliver's repos: each step runs as a Kubernetes Job, defined in
+the repo it deploys. This skill is **how to act**; the reference (SDK, triggers, steps, runs,
+troubleshooting) is served by each instance at **`/docs`** (agent index: `/llms.txt`). Read those
+instead of guessing or reading the service source.
 
-Repo: <https://github.com/OliverVea/Olve.Pipelines> — the **README is the canonical reference**.
-A fuller, agent-friendly setup guide is served by the running instance at **`/docs`** (raw
-Markdown, with a subject index).
+## Recognize the version
 
-## The `.pipelines/` marker
+- **`.pipelines/pipeline.ts`** (with `handlers/`, `models.ts`, a `package.json`) → **v2**: a typed
+  TypeScript pipeline on the SDK `@olve/pipelines`. This is the current system.
+- **`.pipelines/config.yaml`** → **v1** (legacy, still deploying repos not yet migrated). v1 has its
+  own `pl` binary and API; don't apply v2 commands or concepts to it.
 
-If a repo has a **`.pipelines/` directory** (containing `config.yaml`, optionally
-`scripts/*.sh`), that repo is deployed via Olve.Pipelines. This is the signal — treat it like
-you would a `.github/workflows/` directory for GitHub Actions.
+In Oliver's repos "pipeline" means an Olve.Pipelines pipeline, not GitHub Actions.
 
-- `.pipelines/config.yaml` is the **single source of truth** for the pipeline's shape.
-- A reconcile loop polls the branch head (~5 min); pushing a commit redeploys automatically.
-- You never hand-author triggers or run shape-mutating commands — **shape is git-owned**, so to
-  change the build/deploy you edit `config.yaml` and push. (Operational actions — manual
-  triggers, job cancel, the promotion gate — are driven with the `pl` CLI.)
+## Instances
 
-## When the user says "pipeline"
+| Instance | URL (Tailscale) | Profile convention |
+|---|---|---|
+| v2 prod | `https://pipelines-v2-private.ovea.pro` | `default` |
+| v2 beta | `https://pipelines-v2-beta.ovea.pro` | `beta` |
 
-In Oliver's repos, "pipeline" almost always means an **Olve.Pipelines** pipeline (not GitHub
-Actions, not a generic CI concept). React accordingly:
+The web UI is at each URL. Everything below assumes v2.
 
-- **"set up a pipeline" / "add CD"** → add a `.pipelines/config.yaml` to the repo, then bind it.
-  [`Olve.Template.Api`](https://github.com/OliverVea/Olve.Template.Api/tree/main/.pipelines)
-  ships a copy-me starter (Kaniko build + Helm deploy). Bind it with `pl binding create
-  <owner/repo> --credentials-secret <key>` (then `pl secret set` its declared secrets); the
-  `Olve.Pipelines` repo's `setup-pipeline` skill wraps this as a full bootstrap runbook.
-- **"deploy" / "redeploy"** → usually just push to the bound branch; the deploy poll picks it up.
-- **questions about config schema, steps, secrets, promotion gates, triggers** → read the
-  README / `/docs` rather than guessing. Don't reinvent the model from memory.
+## Rules
 
-## Mental model (one line each)
+1. **Use the `pl` CLI for everything.** Not `curl`, not the HTTP API, not `kubectl`: `pl` handles
+   auth, naming (pipelines by name, runs as `<pipeline>#<run>`, steps as `#<run>/<step>`) and the
+   API's details. `pl help`, `pl <noun> --help`. Install: `curl -fsSL
+   https://pipelines-v2-private.ovea.pro/install.sh | sh` (v2 prod serves the current `pl`).
+2. **The user logs in, not you.** Login is an interactive OIDC device flow. Never handle tokens.
+   If a command needs auth (mutations, secrets, step files), check `pl profile list`, and if the
+   profile isn't logged in, ask the user to run it with the `!` prefix so the link lands in the
+   session:
+   `! pl login --api-url https://pipelines-v2-private.ovea.pro` and
+   `! pl login --profile beta --api-url https://pipelines-v2-beta.ovea.pro`.
+   Tokens refresh themselves; expect to ask again only when a refresh fails.
+3. **Pick the instance with a profile.** `--profile <name>` goes **after** the command
+   (`pl pipeline list --profile beta`), or set `PIPELINES_PROFILE` for a shell. No flag means
+   `default`. Don't edit `~/.pl`.
+4. **Wait with `pl wait`, never with hand-rolled poll loops.** It re-checks on the instance's live
+   events, exits 0 (succeeded), 1 (failed or can no longer happen) or 124 (`--timeout`), prints
+   the result on stdout and progress on stderr. Run it as a background task and act on the exit
+   code:
+   ```sh
+   pl wait push "<pipeline>" <sha> --until finished --timeout 60m   # the run of a pushed commit
+   addr=$(pl wait push "<pipeline>" <sha>)                          # just its address
+   pl wait run "<pipeline>#<run>/<step>" --timeout 30m              # one step
+   pl wait reconcile "<pipeline>" <sha>                             # a pipeline-definition commit applied
+   ```
+5. **Know what a push does before you push.** The pipeline's `onPush` in `.pipelines/pipeline.ts`
+   decides it (e.g. some pipelines deploy beta, smoke-test, then **prod** on every push). A newer
+   push **supersedes** a running automatic run (its unstarted steps never run), so batch commits
+   instead of pushing one by one while a deploy is in flight.
+6. **Confirm before prod-affecting actions** (`pl trigger` with a prod input, `pl run continue`
+   to promote, `pl gate unblock`, `pl pipeline switch`, deleting secrets or pipelines) unless the
+   user asked for exactly that.
+7. **Changing a pipeline** = edit `.pipelines/` and push; the shape is git-owned (no API changes
+   it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo. Every step needs a
+   `description` (may be `""`). After pushing, `pl wait reconcile` the commit; a failed reconcile
+   holds all runs of the pipeline until fixed, and shows in `pl binding status <pipeline>`.
 
-- **Production steps** run in parallel → produce an ArtifactBundle (`bundle/<step>/`).
-- **Processing steps** run sequentially, each receiving the full bundle (e.g. build → deploy).
-- **Secrets** are declared by name in `config.yaml`; values live in the pipeline's k8s secret,
-  never in the repo. Referenced as `$SECRET:NAME`.
-- **Promotion gate** is operational state (block/unblock/re-promote a step), not git config.
+## Reading state
 
-## Driving & inspecting a pipeline — use `pl`
-
-**The `pl` CLI is the interface. Use it for everything** — bind, secrets, status, triggers,
-inspection. Don't call the HTTP API directly; `pl` wraps it (and handles auth, output, and the
-API's rough edges for you). A web UI exists at the instance root
-(<https://pipelines-private.ovea.pro>) for point-and-click inspection and the promotion gate.
-
-`pl` is built and served by the instance itself (no GitHub Releases), so install it straight
-from the controller:
-
-- Linux: `curl -fsSL https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.sh | sh`
-- Windows: `irm https://raw.githubusercontent.com/OliverVea/Olve.Pipelines/main/install.ps1 | iex`
-
-It defaults to the private instance over Tailscale — if you can reach the instance, you can
-install and use it. Read commands need no auth (`pl pipeline list`, `pl job list`,
-`pl job logs <id>`, `pl production list`, `pl processing list`, …); for mutating commands run
-`pl login` first (browser OIDC, or `--device` over SSH). Bootstrap and GitOps management are
-covered too: `pl binding create/get/status/set-credentials/set-trigger/reconcile` to bind a
-repo and drive its reconcile, and `pl secret list/set/delete` to manage the pipeline's k8s
-secret values — so a bound pipeline can be created and maintained entirely from the CLI.
-`pl --help` lists the full surface.
-
-## Inspecting runs & logs (`pl`)
-
-Answer "did my push deploy?", "which step failed?", "why?" with `pl` — no cluster access, and
-no auth for these reads (they work against the private instance over Tailscale; add
-`--api-url https://pipelines-beta.ovea.pro` to target beta):
-
-- `pl pipeline list` → pipelines with id + name. Find the one you care about (e.g. `questionbank`).
-- `pl job list --pipeline <id>` → that pipeline's jobs, newest first. Each shows type
-  (production|processing), status (done|failed|running|…), timings, and a failure reason.
-- `pl job get <jobId>` → single job detail.
-- `pl job logs <jobId>` → that job's console output (the real error tail).
-- `pl processing promotions <id>` → per-step promotion-gate state (blocked/open).
-- `pl bundle list <id>` → completed production bundles; **empty until a production group fully
-  succeeds** (a failed production step ⇒ no bundle ⇒ no deploy).
-
-Add `--json` to any command for machine-readable output. Jobs reference steps by id (a GUID);
-map an id to a name by its order in `.pipelines/config.yaml` (`productionSteps`/`processingSteps`
-are listed in order). The same step id across multiple jobs = the controller's retry attempts.
-
-Recipe — "confirm why a deploy didn't run":
 ```sh
-pl pipeline list                     # find the pipeline id by name
-pl job list --pipeline <id>          # newest first; spot the failed job
-pl job logs <failed-job-id>          # read the tail for the real error
+pl pipeline list                               # health, last run, active version, gates
+pl run list "<pipeline>"                       # newest first
+pl run get "<pipeline>#<run>"                  # stages, each step's status and reason
+pl step logs "<pipeline>#<run>/<step>"         # the real error; --follow while running
+pl step output "<pipeline>#<run>/<step>"       # typed output; pl step files / pl step file
+pl binding status "<pipeline>"                 # reconcile result, problems, warnings
+pl attempts                                    # what's running across pipelines
 ```
-A failed **production** step blocks **every** processing step (no beta, no prod) — so a red
-typecheck/test gate shows up as a failed production job with the processing steps never created.
+
+Add `--json` for machine-readable output. A step shown as `excluded` wasn't part of that run (its
+`when` didn't match); `skipped` means it was skipped (handler or a missing input).
+
+## Acting
+
+- **Deploy** = push to the bound branch (rule 5), or `pl trigger "<pipeline>" --field k=v`.
+- **Promote / change input of a finished run**: `pl run continue "<pipeline>#<run>" --field
+  deployTo=prod` keeps completed stages and runs the rest.
+- **Retry a step**: `pl step rerun "<pipeline>#<run>/<step>" --continue`.
+- **Stop**: `pl step cancel …` / `pl run cancel …`.
+- **Gates** (hold runs before a step): `pl gate block|unblock "<pipeline>/<step>"`.
+- **Secrets**: `pl secret list "<pipeline>"`; set values from stdin or `--from-env` (never put a
+  value on the command line or in output).
 
 ## Don't
 
-- Don't treat `.pipelines/` as dead/example config — it's live deployment config.
-- Don't reach for the HTTP API or hand-rolled `curl`. Use `pl` for every operation — it's the
-  supported interface and wraps the API for you.
-- Don't try to mutate pipeline shape at all (no `pl` command or API does it) — edit `config.yaml`
-  and push.
-- Don't deep-dive the Olve.Pipelines source to answer a usage question — start from the README
-  and `/docs`.
+- Don't treat `.pipelines/` as example config — it's live deployment config.
+- Don't poll with `sleep` loops, `curl` or `watch`; use `pl wait`.
+- Don't log in for the user, copy tokens, or edit `~/.pl`.
+- Don't answer usage questions from memory or the service source; read the instance's `/docs`.
