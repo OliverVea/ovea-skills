@@ -106,7 +106,18 @@ Add `--json` for machine-readable output. A step shown as `excluded` wasn't part
   don't unblock a step someone else blocked without asking. ("Gate" means a step that decides
   whether a run goes on: tests, approval, visual regression.)
 - **Secrets**: `pl secret list "<pipeline>"`; set values from stdin or `--from-env` (never put a
-  value on the command line or in output).
+  value on the command line or in output). Deleting a secret the config references needs `--force`
+  and holds new runs until it's set again; confirm first.
+- **Config** (the per-instance values a pipeline declares with `config(...)`: targets, auth, …):
+  `pl config get "<pipeline>" > app.yml`, edit, `pl config set "<pipeline>" -f app.yml`;
+  `pl config history|rollback|check`. Every save is a new numbered snapshot (`config #N`) validated
+  against the schema. Config is readable; anything sensitive is a secret it references
+  (`{ secret: NAME }`). Changing config that targets prod is a prod-affecting action (rule 6).
+- **Pending / held versions**: a new version whose config or referenced secrets aren't satisfied
+  stays **pending** (the active one keeps running; pushes wait). `pl binding status` names what's
+  missing; set it and the version activates by itself. Don't work around it with `pl pipeline switch`.
+- **Runs pin their config** like their version (`pl run get` shows `vN, config #M`): `run continue`
+  and `step rerun` reuse it; picking up new config needs a new run.
 
 ## Don't
 
