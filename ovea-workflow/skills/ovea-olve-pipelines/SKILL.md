@@ -73,6 +73,12 @@ The web UI is at each URL.
    it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo. Every step needs a
    `description` (may be `""`). After pushing, `pl wait reconcile` the commit; a failed reconcile
    holds all runs of the pipeline until fixed, and shows in `pl binding status <pipeline>`.
+   Reconcile checks the pipeline with the server code the instance is running, so a pipeline can't
+   use an SDK feature that needs a newer server than the instance has. For Olve.Pipelines itself:
+   **push the server change on its own, let it reach prod, then push the pipeline change that
+   needs it.** If a reconcile is already stuck that way, deploy the commit with the active
+   version (`pl trigger "<pipeline>" --field sha=<sha> …`, a prod action: confirm first), then
+   `pl binding reconcile "<pipeline>"`.
 8. **Report the run with every change.** When you tell the user about a change that a push
    deploys, name the run that carries it and where it is: `pl wait push "<pipeline>" <sha>` prints
    `<pipeline>#<run>`; say e.g. "`Olve.Pipelines v2#36` (running)" or "#36, green through prod".
@@ -113,6 +119,10 @@ Add `--json` for machine-readable output. A step shown as `excluded` wasn't part
   `pl config history|rollback|check`. Every save is a new numbered snapshot (`config #N`) validated
   against the schema. Config is readable; anything sensitive is a secret it references
   (`{ secret: NAME }`). Changing config that targets prod is a prod-affecting action (rule 6).
+- **Deploy targets are config**: where a pipeline using `deployTarget()` / `helmTarget()` deploys
+  is `target.<stage>.kind` in its config: `inCluster` or `ssh` (helm), `compose` (a Docker Compose
+  deployer, `/docs/compose-deploy.md`) or `none` (not deployed). Changing it is a config change
+  (`pl config set`, then a new run), not a pipeline change.
 - **Pending / held versions**: a new version whose config or referenced secrets aren't satisfied
   stays **pending** (the active one keeps running; pushes wait). `pl binding status` names what's
   missing; set it and the version activates by itself. Don't work around it with `pl pipeline switch`.
