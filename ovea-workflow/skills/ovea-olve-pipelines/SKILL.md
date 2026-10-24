@@ -94,6 +94,7 @@ pl step logs "<pipeline>#<run>/<step>"         # the real error; --follow while 
 pl step output "<pipeline>#<run>/<step>"       # typed output; pl step files / pl step file
 pl binding status "<pipeline>"                 # reconcile result, problems, warnings
 pl attempts                                    # what's running across pipelines
+pl run critical-path "<pipeline>" [--from N --to M] [--step X]   # where the time goes, per step
 ```
 
 Add `--json` for machine-readable output. A step shown as `excluded` wasn't part of that run (its
