@@ -26,7 +26,7 @@ pipelines_v2() {
   mkdir -p .pipelines/handlers
   cat > .pipelines/package.json <<'J'
 { "name": "homelab-status-pipeline", "private": true, "type": "module",
-  "dependencies": { "@olivervea/pipelines": "^2.4.0" } }
+  "dependencies": { "@olivervea/pipelines": "2.0.0-beta.4" } }
 J
   cat > .pipelines/models.ts <<'J'
 export type DeployTo = "beta" | "prod";
