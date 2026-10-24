@@ -10,12 +10,10 @@ the repo it deploys. This skill is **how to act**; the reference (SDK, triggers,
 troubleshooting) is served by each instance at **`/docs`** (agent index: `/llms.txt`). Read those
 instead of guessing or reading the service source.
 
-## Recognize the version
+## Recognize it
 
-- **`.pipelines/pipeline.ts`** (with `handlers/`, `models.ts`, a `package.json`) → **v2**: a typed
-  TypeScript pipeline on the SDK `@olve/pipelines`. This is the current system.
-- **`.pipelines/config.yaml`** → **v1** (legacy, still deploying repos not yet migrated). v1 has its
-  own `pl` binary and API; don't apply v2 commands or concepts to it.
+A repo's pipeline is **`.pipelines/pipeline.ts`** (with `handlers/`, `models.ts`, a `package.json`):
+a typed TypeScript pipeline on the SDK `@olivervea/pipelines`.
 
 In Oliver's repos "pipeline" means an Olve.Pipelines pipeline, not GitHub Actions.
 
@@ -23,31 +21,31 @@ In Oliver's repos "pipeline" means an Olve.Pipelines pipeline, not GitHub Action
 
 | Instance | URL (Tailscale) | Profile convention |
 |---|---|---|
-| v2 prod | `https://pipelines-v2-private.ovea.pro` | `default` |
-| v2 beta | `https://pipelines-v2-beta.ovea.pro` | `beta` |
+| prod | `https://pipelines-v2-private.ovea.pro` | `default` |
+| beta | `https://pipelines-v2-beta.ovea.pro` | `beta` |
 
-The web UI is at each URL. Everything below assumes v2.
+The web UI is at each URL.
 
 ## Rules
 
 1. **Use the `pl` CLI for everything.** Not `curl`, not the HTTP API, not `kubectl`: `pl` handles
    auth, naming (pipelines by name, runs as `<pipeline>#<run>`, steps as `#<run>/<step>`) and the
    API's details. `pl help`, `pl <noun> --help`. If `pl` is missing or `pl wait` / `pl profile`
-   are unknown commands (an old or v1 `pl`), install the current one from v2 prod, which serves
+   are unknown commands (an old `pl`), install the current one from prod, which serves
    the `pl` it was deployed with:
    ```sh
    curl -fsSL https://pipelines-v2-private.ovea.pro/install.sh | sh        # Linux → ~/.local/bin/pl
    irm https://pipelines-v2-private.ovea.pro/install.ps1 | iex             # Windows
    pl --version && pl profile list                                         # then rule 2 if not logged in
    ```
-   It replaces `~/.local/bin/pl`; on a machine that still needs v1's `pl`, keep a copy under another
-   name first (e.g. `pl-v1`).
-2. **The user logs in, not you.** Login is an interactive OIDC device flow. Never handle tokens.
-   Everything on prod needs a session, reads included (v2 beta allows anonymous reads). Check
+   It replaces `~/.local/bin/pl`.
+2. **The user logs in, not you.** Login is interactive OIDC: a browser flow by default, or with
+   `--device` a device flow that prints a URL (and QR code) to approve. Never handle tokens.
+   Everything on prod needs a session, reads included (beta allows anonymous reads). Check
    `pl profile list`, and if the profile isn't logged in, ask the user to run it with the `!`
-   prefix so the link lands in the session:
-   `! pl login --api-url https://pipelines-v2-private.ovea.pro` and
-   `! pl login --profile beta --api-url https://pipelines-v2-beta.ovea.pro`.
+   prefix and `--device` so the link lands in the session:
+   `! pl login --device --api-url https://pipelines-v2-private.ovea.pro` and
+   `! pl login --device --profile beta --api-url https://pipelines-v2-beta.ovea.pro`.
    Tokens refresh themselves; expect to ask again only when a refresh fails.
 3. **Pick the instance with a profile.** `--profile <name>` goes **after** the command
    (`pl pipeline list --profile beta`), or set `PIPELINES_PROFILE` for a shell. No flag means

@@ -1,0 +1,18 @@
+schema_version: "1.1"
+name: p11
+description: "[v2] the last run failed, what broke?"
+tags: [load, v2, synth]
+expected_outcome: "ovea-olve-pipelines skill is invoked"
+runs: 3
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 10
+  timeout_seconds: 300
+  allowed_tools: [Read, Glob, Grep, Skill]
+  prompt: "the last run failed, what broke?"
+graders:
+  - name: skill-loaded
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?ovea-olve-pipelines"'
