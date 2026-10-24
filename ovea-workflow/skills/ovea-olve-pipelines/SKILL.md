@@ -1,6 +1,6 @@
 ---
 name: ovea-olve-pipelines
-description: How an agent works with Olve.Pipelines, Oliver's homelab GitOps CD service — recognizing a pipeline, driving it with the `pl` CLI, waiting for deploys, profiles and login, changing a pipeline safely. Use when a repo contains a `.pipelines/` directory, when the user says "pipeline" / "deploy" in a homelab context, or before running any `pl` command. Points to the instance's /docs for reference; this skill is the agent playbook.
+description: How an agent works with Olve.Pipelines, Oliver's homelab GitOps CD service — driving it with the `pl` CLI, waiting for deploys, profiles and login, changing a pipeline safely. Use when the repo has `.pipelines/pipeline.ts`, when the user names Olve.Pipelines, or before running any `pl` command. For a generic "pipeline" / "deploy" / "CI" request, check the repo for `.pipelines/` first. Without it (GitHub Actions in `.github/workflows/`, a data pipeline, a Claude Code workflow) this skill does not apply. Points to the instance's /docs for reference; this skill is the agent playbook.
 ---
 
 # Olve.Pipelines — agent playbook
