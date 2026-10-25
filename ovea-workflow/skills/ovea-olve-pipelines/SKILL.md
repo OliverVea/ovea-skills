@@ -21,8 +21,8 @@ In Oliver's repos "pipeline" means an Olve.Pipelines pipeline, not GitHub Action
 
 | Instance | URL (Tailscale) | Profile convention |
 |---|---|---|
-| prod | `https://pipelines-v2-private.ovea.pro` | `default` |
-| beta | `https://pipelines-v2-beta.ovea.pro` | `beta` |
+| prod | `https://pipelines-private.ovea.pro` | `default` |
+| beta | `https://pipelines-beta.ovea.pro` | `beta` |
 
 The web UI is at each URL.
 
@@ -34,8 +34,8 @@ The web UI is at each URL.
    are unknown commands (an old `pl`), install the current one from prod, which serves
    the `pl` it was deployed with:
    ```sh
-   curl -fsSL https://pipelines-v2-private.ovea.pro/install.sh | sh        # Linux → ~/.local/bin/pl
-   irm https://pipelines-v2-private.ovea.pro/install.ps1 | iex             # Windows
+   curl -fsSL https://pipelines-private.ovea.pro/install.sh | sh        # Linux → ~/.local/bin/pl
+   irm https://pipelines-private.ovea.pro/install.ps1 | iex             # Windows
    pl --version && pl profile list                                         # then rule 2 if not logged in
    ```
    It replaces `~/.local/bin/pl`.
@@ -44,8 +44,8 @@ The web UI is at each URL.
    Everything on prod needs a session, reads included (beta allows anonymous reads). Check
    `pl profile list`, and if the profile isn't logged in, ask the user to run it with the `!`
    prefix and `--device` so the link lands in the session:
-   `! pl login --device --api-url https://pipelines-v2-private.ovea.pro` and
-   `! pl login --device --profile beta --api-url https://pipelines-v2-beta.ovea.pro`.
+   `! pl login --device --api-url https://pipelines-private.ovea.pro` and
+   `! pl login --device --profile beta --api-url https://pipelines-beta.ovea.pro`.
    Tokens refresh themselves; expect to ask again only when a refresh fails.
 3. **Pick the instance with a profile.** `--profile <name>` goes **after** the command
    (`pl pipeline list --profile beta`), or set `PIPELINES_PROFILE` for a shell. No flag means
