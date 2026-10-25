@@ -71,7 +71,9 @@ The web UI is at each URL.
    user asked for exactly that.
 7. **Changing a pipeline** = edit `.pipelines/` and push; the shape is git-owned (no API changes
    it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo. Every step needs a
-   `description` (may be `""`). After pushing, `pl wait reconcile` the commit; a failed reconcile
+   `description` (may be `""`). Use a library step (`steps.*`) where one fits; a step only this
+   pipeline needs is a custom step with a `handlers/` file; one several repos need is a reusable
+   step (`/docs/pipeline-reference.md#reusable-steps`), not a copy. After pushing, `pl wait reconcile` the commit; a failed reconcile
    holds all runs of the pipeline until fixed, and shows in `pl binding status <pipeline>`.
    Reconcile checks the pipeline with the server code the instance is running, so a pipeline can't
    use an SDK feature that needs a newer server than the instance has. For Olve.Pipelines itself:
