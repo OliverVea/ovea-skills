@@ -53,8 +53,8 @@ The web UI is at each URL.
    (`pl pipeline list --profile beta`), or set `PIPELINES_PROFILE` for a shell. No flag means
    `default`. Don't edit `~/.pl`.
 4. **Wait with `pl wait`, never with hand-rolled poll loops.** It re-checks on the instance's live
-   events, exits 0 (succeeded), 1 (failed or can no longer happen), 2 (usage error) or 124
-   (`--timeout`), prints the result on stdout and progress on stderr. A superseded run is followed
+   events, exits 0 (succeeded), 1 (failed or can no longer happen), 2 (usage error), 3 (a step
+   waits for external input: tell the user, with the address it printed) or 124 (`--timeout`), prints the result on stdout and progress on stderr. A superseded run is followed
    to the run that superseded it (`--no-follow` to stop there). Run it as a background task and act on the exit
    code:
    ```sh
@@ -111,11 +111,15 @@ Add `--json` for machine-readable output. A step shown as `excluded` wasn't part
   deployTo=prod` keeps completed stages and runs the rest.
 - **Retry a step**: `pl step rerun "<pipeline>#<run>/<step>" --continue`.
 - **Stop**: `pl step cancel …` / `pl run cancel …`.
+- **A step waiting for external input** (`pl input list`): never answer or decline it yourself
+  (`pl input answer|decline`) unless the user tells you the answer for that step; report the
+  address and what it asks.
 - **Block a step** (`pl step block|unblock "<pipeline>/<step>"`, `pl step blocked "<pipeline>"`):
   holds every run that reaches it. Only while working on the pipeline or its target, or in an
   incident, and only when the user asks; unblock when done. Never use it as an approval step, and
   don't unblock a step someone else blocked without asking. ("Gate" means a step that decides
-  whether a run goes on: tests, approval, visual regression.)
+  whether a run goes on: tests, visual regression.) Never add a manual promotion or approval step
+  to a pipeline: pushes flow on their own.
 - **Secrets**: `pl secret list "<pipeline>"`; set values from stdin or `--from-env` (never put a
   value on the command line or in output). Deleting a secret the config references needs `--force`
   and holds new runs until it's set again; confirm first.
