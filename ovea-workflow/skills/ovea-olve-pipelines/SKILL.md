@@ -39,8 +39,10 @@ The web UI is at each URL.
    pl --version && pl profile list                                         # then rule 2 if not logged in
    ```
    It replaces `~/.local/bin/pl`.
-2. **The user logs in, not you.** Login is interactive OIDC: a browser flow by default, or with
-   `--device` a device flow that prints a URL (and QR code) to approve. Never handle tokens.
+2. **The user logs in, not you.** Login is interactive OIDC against the instance's own Dex
+   (`<instance>/dex`, which sends the user on to GitHub; only allow-listed accounts get in): a
+   browser flow by default, or with `--device` a device flow that prints a URL (and QR code) to
+   approve. There are no machine tokens. Never handle tokens.
    Everything on prod needs a session, reads included (beta allows anonymous reads). Check
    `pl profile list`, and if the profile isn't logged in, ask the user to run it with the `!`
    prefix and `--device` so the link lands in the session:
