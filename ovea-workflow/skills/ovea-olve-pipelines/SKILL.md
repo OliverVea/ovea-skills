@@ -54,7 +54,8 @@ The web UI is at each URL.
    `default`. Don't edit `~/.pl`.
 4. **Wait with `pl wait`, never with hand-rolled poll loops.** It re-checks on the instance's live
    events, exits 0 (succeeded), 1 (failed or can no longer happen), 2 (usage error), 3 (a step
-   waits for external input: tell the user, with the address it printed) or 124 (`--timeout`), prints the result on stdout and progress on stderr. A superseded run is followed
+   waits for a person's input: tell the user, with the address it printed; callback and poll
+   inputs answer themselves and don't stop the wait) or 124 (`--timeout`), prints the result on stdout and progress on stderr. A superseded run is followed
    to the run that superseded it (`--no-follow` to stop there). Run it as a background task and act on the exit
    code:
    ```sh
