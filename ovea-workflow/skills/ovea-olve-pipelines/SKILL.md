@@ -83,7 +83,9 @@ The web UI is at each URL.
    **push the server change on its own, let it reach prod, then push the pipeline change that
    needs it.** If a reconcile is already stuck that way, deploy the commit with the active
    version (`pl trigger "<pipeline>" --field sha=<sha> …`, a prod action: confirm first), then
-   `pl binding reconcile "<pipeline>"`.
+   `pl binding reconcile "<pipeline>"`. After a server change in how manifests are read (a new
+   manifest field, a validator rule), `pl binding reconcile "<pipeline>" --rebuild` reconciles the
+   applied commit again; the version changes only if the manifest does.
 8. **Report the run with every change.** When you tell the user about a change that a push
    deploys, name the run that carries it and where it is: `pl wait push "<pipeline>" <sha>` prints
    `<pipeline>#<run>`; say e.g. "`Olve.Pipelines v2#36` (running)" or "#36, green through prod".
