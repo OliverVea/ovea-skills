@@ -73,7 +73,8 @@ The web UI is at each URL.
    to promote, `pl step unblock`, `pl pipeline switch`, deleting secrets or pipelines) unless the
    user asked for exactly that.
 7. **Changing a pipeline** = edit `.pipelines/` and push; the shape is git-owned (no API changes
-   it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo. Every step needs a
+   it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo; `pl dev` needs Bun and
+   runs the SDK the pipeline's `package.json` pins, so `bun install` in `.pipelines/` first. Every step needs a
    `description` (may be `""`). Use a library step (`steps.*`) where one fits; a step only this
    pipeline needs is a custom step with a `handlers/` file; one several repos need is a reusable
    step (`/docs/pipeline-reference.md#reusable-steps`), not a copy. After pushing, `pl wait reconcile` the commit; a failed reconcile
