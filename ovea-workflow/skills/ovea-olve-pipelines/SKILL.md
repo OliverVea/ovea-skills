@@ -43,7 +43,7 @@ The web UI is at each URL.
    (`<instance>/dex`, which sends the user on to GitHub; only allow-listed accounts get in): a
    browser flow by default, or with `--device` a device flow that prints a URL (and QR code) to
    approve. There are no machine tokens. Never handle tokens.
-   Everything on prod needs a session, reads included (beta allows anonymous reads). Check
+   Every instance needs a session, reads included. Check
    `pl profile list`, and if the profile isn't logged in, ask the user to run it with the `!`
    prefix and `--device` so the link lands in the session:
    `! pl login --device --api-url https://pipelines-private.ovea.pro` and
