@@ -1,6 +1,6 @@
 ---
 name: ovea-olve-pipelines
-description: How an agent works with Olve.Pipelines, Oliver's homelab GitOps CD service — driving it with the `pl` CLI, waiting for deploys, profiles and login, changing a pipeline safely. Use when the repo has `.pipelines/pipeline.ts`, when the user names Olve.Pipelines, or before running any `pl` command. For a generic "pipeline" / "deploy" / "CI" request, check the repo for `.pipelines/` first. Without it (GitHub Actions in `.github/workflows/`, a data pipeline, a Claude Code workflow) this skill does not apply. Points to the instance's /docs for reference; this skill is the agent playbook.
+description: How an agent works with Olve.Pipelines, Oliver's homelab GitOps CD service — driving it with the `pl` CLI, waiting for deploys, profiles and login, changing a pipeline safely. Use when the repo has `.pipelines/`, when the user names Olve.Pipelines, or before running any `pl` command. For a generic "pipeline" / "deploy" / "CI" request, check the repo for `.pipelines/` first. Without it (GitHub Actions in `.github/workflows/`, a data pipeline, a Claude Code workflow) this skill does not apply. Points to the instance's /docs for reference; this skill is the agent playbook.
 ---
 
 # Olve.Pipelines — agent playbook
@@ -12,7 +12,8 @@ instead of guessing or reading the service source.
 
 ## Recognize it
 
-A repo's pipeline is **`.pipelines/pipeline.ts`** (with `handlers/`, `models.ts`, a `package.json`):
+A repo's pipeline is the **`.pipelines/`** package: `main` in its `package.json` names the entry point
+(`pipeline.ts` without one), and the other file names are the repo's own. It is
 a typed TypeScript pipeline on the SDK `@olivervea/pipelines`.
 
 In Oliver's repos "pipeline" means an Olve.Pipelines pipeline, not GitHub Actions.
@@ -76,7 +77,8 @@ The web UI is at each URL.
    it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo; `pl dev` needs Bun and
    runs the SDK the pipeline's `package.json` pins, so `bun install` in `.pipelines/` first. Every step needs a
    `description` (may be `""`). Use a library step (`steps.*`) where one fits; a step only this
-   pipeline needs is a custom step with a `handlers/` file; one several repos need is a reusable
+   pipeline needs is `implement(step({ … }), fn)`, imported and staged like any value (older pipelines
+   keep it in a `handlers/` file); one several repos need is a reusable
    step (`/docs/pipeline-reference.md#reusable-steps`), not a copy. After pushing, `pl wait reconcile` the commit; a failed reconcile
    holds all runs of the pipeline until fixed, and shows in `pl binding status <pipeline>`.
    Reconcile checks the pipeline with the server code the instance is running, so a pipeline can't
