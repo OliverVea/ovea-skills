@@ -12,8 +12,8 @@ instead of guessing or reading the service source.
 
 ## Recognize it
 
-A repo's pipeline is the **`.pipelines/`** package: `main` in its `package.json` names the entry point
-(`pipeline.ts` without one), and the other file names are the repo's own. It is
+A repo's pipeline is the **`.pipelines/`** package: `main` in its `package.json` names the entry point, and the other file names
+are the repo's own. It is
 a typed TypeScript pipeline on the SDK `@olivervea/pipelines`.
 
 In Oliver's repos "pipeline" means an Olve.Pipelines pipeline, not GitHub Actions.
@@ -56,16 +56,17 @@ The web UI is at each URL.
 4. **Wait with `pl wait`, never with hand-rolled poll loops.** It re-checks on the instance's live
    events, exits 0 (succeeded), 1 (failed or can no longer happen), 2 (usage error), 3 (a step
    waits for a person's input: tell the user, with the address it printed; callback and poll
-   inputs answer themselves and don't stop the wait) or 124 (`--timeout`), prints the result on stdout and progress on stderr. A superseded run is followed
+   inputs answer themselves and don't stop the wait), 4 (the run is held at a blocked step: tell the
+   user; wait again after an unblock) or 124 (`--timeout`), prints the result on stdout and progress on stderr. A superseded run is followed
    to the run that superseded it (`--no-follow` to stop there). Run it as a background task and act on the exit
    code:
    ```sh
    pl wait push "<pipeline>" <sha> --until finished --timeout 60m   # the run of a pushed commit
    addr=$(pl wait push "<pipeline>" <sha>)                          # just its address
-   pl wait run "<pipeline>#<run>/<step>" --timeout 30m              # one step
+   pl wait run "<pipeline>#<run>/<step>" --timeout 30m              # one step: its latest attempt, also a rerun in an ended run
    pl wait reconcile "<pipeline>" <sha>                             # a pipeline-definition commit applied
    ```
-5. **Know what a push does before you push.** The pipeline's `onPush` in `.pipelines/pipeline.ts`
+5. **Know what a push does before you push.** The pipeline's `onPush` in `.pipelines/`
    decides it (e.g. some pipelines deploy beta, smoke-test, then **prod** on every push). Runs
    flow on concurrently: an older run keeps going while newer ones build behind it; only where two
    runs' attempts of the same step are both waiting does the newer win (the older run is then
@@ -77,8 +78,7 @@ The web UI is at each URL.
    it). Before pushing: `pl dev describe` (and `pl dev validate`) in the repo; `pl dev` needs Bun and
    runs the SDK the pipeline's `package.json` pins, so `bun install` in `.pipelines/` first. Every step needs a
    `description` (may be `""`). Use a library step (`steps.*`) where one fits; a step only this
-   pipeline needs is `implement(step({ … }), fn)`, imported and staged like any value (older pipelines
-   keep it in a `handlers/` file); one several repos need is a reusable
+   pipeline needs is `implement(step({ … }), fn)`, imported and staged like any value; one several repos need is a reusable
    step (`/docs/pipeline-reference.md#reusable-steps`), not a copy. After pushing, `pl wait reconcile` the commit; a failed reconcile
    holds all runs of the pipeline until fixed, and shows in `pl binding status <pipeline>`.
    Reconcile checks the pipeline with the server code the instance is running, so a pipeline can't
