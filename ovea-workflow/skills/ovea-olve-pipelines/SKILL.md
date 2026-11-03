@@ -116,6 +116,11 @@ Add `--json` for machine-readable output. A step shown as `excluded` wasn't part
 - **Promote / change input of a finished run**: `pl run continue "<pipeline>#<run>" --field
   deployTo=prod` keeps completed stages and runs the rest.
 - **Retry a step**: `pl step rerun "<pipeline>#<run>/<step>" --continue`.
+- **Debug a failed step locally**: `pl dev run <step> --from "<pipeline>#<run>"` in the repo runs the
+  step from your source on that run's input, upstream outputs (files fetched on use) and config;
+  edit the handler and run it again until it passes, then push. Secrets come from your environment
+  (`--secret NAME=…`), never from the cluster: a step with secrets does real things, so confirm
+  first. If `--from` is an unknown option, install the current `pl` (rule 1).
 - **Stop**: `pl step cancel …` / `pl run cancel …`.
 - **A step waiting for external input** (`pl input list`): never answer or decline it yourself
   (`pl input answer|decline`) unless the user tells you the answer for that step; report the
