@@ -79,7 +79,9 @@ The web UI is at each URL.
    runs the SDK the pipeline's `package.json` pins, so `bun install` in `.pipelines/` first. Every step needs a
    `description` (may be `""`). Use a library step (`steps.*`) where one fits; a step only this
    pipeline needs is `implement(step({ … }), fn)`, imported and staged like any value; one several repos need is a reusable
-   step (`/docs/pipeline-reference.md#reusable-steps`), not a copy. After pushing, `pl wait reconcile` the commit; a failed reconcile
+   step (`/docs/pipeline-reference.md#reusable-steps`), not a copy. A deploy step links to what it
+   deployed: `link` on its deploy target in the config, or `ctx.link(url, label?)` in a custom
+   handler (SDK 2.0.0-beta.27 or later; `pl run get` shows it as `→ <url>`). After pushing, `pl wait reconcile` the commit; a failed reconcile
    holds all runs of the pipeline until fixed, and shows in `pl binding status <pipeline>`.
    Reconcile checks the pipeline with the server code the instance is running, so a pipeline can't
    use an SDK feature that needs a newer server than the instance has. For Olve.Pipelines itself:
