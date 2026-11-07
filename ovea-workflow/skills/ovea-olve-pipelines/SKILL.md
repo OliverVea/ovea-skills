@@ -112,6 +112,13 @@ pl run critical-path "<pipeline>" [--since-version V | --from N --to M] [--step 
 Add `--json` for machine-readable output. A step shown as `excluded` wasn't part of that run (its
 `when` didn't match); `skipped` means it was skipped (handler or a missing input).
 
+A **matrix step** runs once per cell (one combination of its axes); `pl run get` lists the cells
+under it. A cell's address is the step with its values: `"<pipeline>#<run>/<step>[os=linux,arch=x64]"`.
+Always quote it: zsh reads unquoted `[...]` as a glob. Logs, output, files, rerun and cancel work per
+cell; the matrix step's own name reruns or cancels every cell. Block only the matrix step, which holds
+all its cells. `pl dev run <step> --cell os=linux` runs chosen cells locally. Writing one:
+`/docs/pipeline-reference.md` (Matrix steps).
+
 ## Acting
 
 - **Deploy** = push to the bound branch (rule 5), or `pl trigger "<pipeline>" --field k=v`.
