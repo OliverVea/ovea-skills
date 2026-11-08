@@ -8,7 +8,7 @@
     {
       "name": "ovea-workflow",
       "source": "./ovea-workflow",
-      "description": "Personal workflow skills (self-igniting letters, handoffs, and other process helpers)"
+      "description": "Personal workflow skills (self-igniting letters, handoffs, PR watching, and other process helpers)"
     }
   ]
 }

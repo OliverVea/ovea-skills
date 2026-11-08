@@ -24,3 +24,7 @@ Personal workflow / process skills:
   the `pl` CLI, profiles and user login, `pl wait` instead of poll loops, changing a pipeline
   safely. Points to the instance's `/docs` for reference. Keep it in step with Olve.Pipelines:
   update it whenever a change there alters how an agent should use it.
+- **ovea-watch-prs** — subscribe to GitHub PR activity (comments, inline review
+  comments, reviews, your own unsubmitted drafts, pushes, state changes, CI checks)
+  and get each new item as an in-session notification via the Monitor tool.
+  Needs `bash`, `jq` and a signed-in `gh`.
