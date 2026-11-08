@@ -49,6 +49,7 @@ The web UI is at each URL.
    prefix and `--device` so the link lands in the session:
    `! pl login --device --api-url https://pipelines-private.ovea.pro` and
    `! pl login --device --profile beta --api-url https://pipelines-beta.ovea.pro`.
+   A profile that logged in before remembers its instance and flow: `! pl login --profile beta`.
    Tokens refresh themselves; expect to ask again only when a refresh fails.
 3. **Pick the instance with a profile.** `--profile <name>` goes **after** the command
    (`pl pipeline list --profile beta`), or set `PIPELINES_PROFILE` for a shell. No flag means
