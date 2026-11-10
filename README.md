@@ -27,6 +27,8 @@ Personal workflow / process skills:
 - **ovea-ui-mocks** — the mock-first workflow for web UI changes: a standalone HTML mock with fake
   data, approved before the UI is built to match it and approved again, then deleted. Changes to an
   approved screen are specimen pages; the mock is the implementation's scope.
+- **ovea-workstyle** — how a piece of work flows: branch off `main` into a new Orca worktree, an
+  agent iterates there, then squash, rebase onto `main` and push to `main`.
 - **ovea-watch-prs** — subscribe to GitHub PR activity (comments, inline review
   comments, reviews, your own unsubmitted drafts, pushes, state changes, CI checks)
   and get each new item as an in-session notification via the Monitor tool.
