@@ -1,0 +1,18 @@
+schema_version: "1.1"
+name: p03
+description: "the header looks cramped on phones, can you rework it?"
+tags: [load]
+expected_outcome: "ovea-ui-mocks skill is invoked"
+runs: 3
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 10
+  timeout_seconds: 300
+  allowed_tools: [Read, Glob, Grep, Skill]
+  prompt: "the header looks cramped on phones, can you rework it?"
+graders:
+  - name: skill-loaded
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?ovea-ui-mocks"'
