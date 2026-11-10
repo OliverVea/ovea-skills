@@ -143,7 +143,9 @@ all its cells. `pl dev run <step> --cell os=linux` runs chosen cells locally. Wr
   to a pipeline: pushes flow on their own.
 - **Secrets**: `pl secret list "<pipeline>"`; set values from stdin or `--from-env` (never put a
   value on the command line or in output). Deleting a secret the config references needs `--force`
-  and holds new runs until it's set again; confirm first.
+  and holds new runs until it's set again; confirm first. When the value is a token with a known
+  lifetime, pass `--expires <date|90d>`: the pipeline then warns from 14 days before which secret
+  to replace (`pl pipeline health`, the overview); nothing is deleted at expiry.
 - **Config** (the per-instance values a pipeline declares with `config(...)`: targets, auth, …):
   `pl config get "<pipeline>" > app.yml`, edit, `pl config set "<pipeline>" -f app.yml`;
   `pl config history|rollback|check`. Every save is a new numbered snapshot (`config #N`) validated
