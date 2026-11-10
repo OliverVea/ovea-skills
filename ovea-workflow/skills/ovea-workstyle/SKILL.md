@@ -13,7 +13,9 @@ One piece of work, one worktree. History on `main` stays linear.
 1. Fetch, then branch off an up-to-date `origin/main` into a new Orca worktree:
    `orca worktree create --repo path:<repo> --name <short-name> --base-branch origin/main`
    (load the `orca-cli` skill for the details, e.g. launching an agent in it with `--agent`).
-2. Work only in that worktree. Don't edit the main checkout: other sessions may be using it.
+2. Work only in that worktree. The main checkout stays clean on `main`: no edits, no uncommitted
+   changes, no other branch checked out. Other sessions branch from it. If it is dirty, say so
+   instead of working around it.
 
 ## Iterate
 
