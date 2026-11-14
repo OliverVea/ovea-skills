@@ -46,17 +46,17 @@ policy: which changes need Oliver's review in a PR, and which an agent may land 
 ```markdown
 ## Publishing
 
-- Agents may land docs, tests and generator changes themselves.
-- Public API changes and anything under `.github/workflows/` go in a PR for Oliver's review.
+- Agents land their own changes without review: push to `main`.
+- **A spec change needs the owner's approval of the spec alone** before the code behind it is built.
+- Changes to `src/Core/` go in a PR for the owner's review.
 ```
 
 - If the policy covers this change, follow it without asking.
-- If there is no policy, or it doesn't cover this change, ask (next section). Most repos won't
-  have one.
+- If there is no policy, or it doesn't cover this change, ask (next section).
 
-An earlier approval doesn't carry over: "merge it yourself" covers the change it was given for, not
-the next one. Only a policy written in the repo is standing permission. Notes in memory don't
-count either. If Oliver wants something permanent, offer to add it to the repo's `CLAUDE.md`.
+Policies live in the repo's `CLAUDE.md`, never in memory. An earlier approval doesn't carry over:
+"merge it yourself" covers the change it was given for, not the next one. If memory holds a
+publishing rule for a repo, point it out and offer to move it into the repo's `CLAUDE.md`.
 
 ### Ask
 
@@ -82,11 +82,18 @@ name the change in one line and say the gate passed. Offer these options:
      walk him through them in the session if he'd rather. Land the change once he's happy with
      those parts. He has delegated the rest, so don't ask again about it.
 
+Then ask a second AskUserQuestion: should this choice become the repo's policy? Offer to add a
+`## Publishing` section to its `CLAUDE.md`, worded for this kind of change (e.g. "docs and tests:
+agents push", or "changes to `src/Core/` go in a PR for review"), or to leave it as a one-off. Write
+the policy only on a yes, and land it with the change or as its own commit.
+
 ### Landing it
 
-- **Direct push allowed** (no branch protection on `main`): `git push origin HEAD:main`.
-- **PRs required:** open a PR, wait for CI (`gh pr checks <n> --watch`), then squash-merge it. If CI
-  fails, fix it, push the fix to the branch and wait again. Don't merge a red PR.
+- **Direct push allowed** (GitHub doesn't require a PR on `main`): `git push origin HEAD:main`.
+- **PRs required:** open a PR, wait for its checks (`gh pr checks <n> --watch`, or the repo's gate
+  when GitHub runs none), then merge it yourself with the method the repo allows (squash, or rebase
+  where squash is off). Never use `--admin` or another bypass: if GitHub still refuses, report it.
+  If a check fails, fix it, push the fix to the branch and wait again. Don't merge a red PR.
 - No merge commits, and never rewrite history that has been pushed to `main`.
 
 ### Opening a PR
