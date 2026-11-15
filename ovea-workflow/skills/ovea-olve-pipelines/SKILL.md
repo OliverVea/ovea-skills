@@ -67,6 +67,7 @@ The web UI is at each URL.
    pl wait run "<pipeline>#<run>/<step>" --timeout 30m              # one step: its latest attempt, also a rerun in an ended run
    pl wait reconcile "<pipeline>" <sha>                             # a pipeline-definition commit applied
    pl wait ci "<pipeline>" <pr> --timeout 30m                       # CI of a pull request's current head
+   pl wait ci "<pipeline>" <pr> --queue                             # its merge-queue entry: merged or removed
    ```
 5. **Know what a push does before you push.** The pipeline's `onPush` in `.pipelines/`
    decides it (e.g. some pipelines deploy beta, smoke-test, then **prod** on every push). Runs
@@ -137,7 +138,13 @@ pl ci get "<pipeline>#ci<n>"                   # stages and steps; a reused step
 pl ci logs "<pipeline>#ci<n>/<step>"           # also output, files, file; --follow while running
 pl ci rerun "<pipeline>" <pr>                  # steps that succeeded on the same tree are reused
 pl ci cancel "<pipeline>#ci<n>"
+pl ci queue "<pipeline>"                       # the merge queue, and what it merged or removed today
 ```
+
+**Landing a PR through the merge queue:** `pl ci merge "<pipeline>" <pr>` enqueues it; the queue tests
+it (with others) on the current branch and merges it itself. `pl wait ci "<pipeline>" <pr> --queue`
+waits until it merged (0) or was removed (1, with the reason); `pl ci dequeue` takes it out. Enqueue
+only what the repo's CLAUDE.md lets you land yourself.
 
 The result also shows on GitHub as the `olve/ci` status of the PR's head. A PR that changes the
 pipeline's definition is tested with its own. Only pull requests by the GitHub logins in the
