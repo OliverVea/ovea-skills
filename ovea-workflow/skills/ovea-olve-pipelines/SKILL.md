@@ -139,6 +139,7 @@ pl ci logs "<pipeline>#ci<n>/<step>"           # also output, files, file; --fol
 pl ci rerun "<pipeline>" <pr>                  # steps that succeeded on the same tree are reused
 pl ci cancel "<pipeline>#ci<n>"
 pl ci queue "<pipeline>"                       # the merge queue, and what it merged or removed today
+pl ci reliability "<pipeline>"                 # flaky CI steps (failed, then passed on the same tree) vs ones that catch real problems
 ```
 
 **Landing a PR through the merge queue:** `pl ci merge "<pipeline>" <pr>` enqueues it; the queue tests
