@@ -66,6 +66,7 @@ The web UI is at each URL.
    addr=$(pl wait push "<pipeline>" <sha>)                          # just its address
    pl wait run "<pipeline>#<run>/<step>" --timeout 30m              # one step: its latest attempt, also a rerun in an ended run
    pl wait reconcile "<pipeline>" <sha>                             # a pipeline-definition commit applied
+   pl wait ci "<pipeline>" <pr> --timeout 30m                       # CI of a pull request's current head
    ```
 5. **Know what a push does before you push.** The pipeline's `onPush` in `.pipelines/`
    decides it (e.g. some pipelines deploy beta, smoke-test, then **prod** on every push). Runs
@@ -125,6 +126,21 @@ Always quote it: zsh reads unquoted `[...]` as a glob. Logs, output, files, reru
 cell; the matrix step's own name reruns or cancels every cell. Block only the matrix step, which holds
 all its cells. `pl dev run <step> --cell os=linux` runs chosen cells locally. Writing one:
 `/docs/pipeline-reference.md` (Matrix steps).
+
+**CI** checks pull requests into the bound branch when the pipeline package exports `ci`
+(`checks()`). CI runs are separate from deploy runs, with their own numbers: `<pipeline>#ci<n>`.
+
+```sh
+pl ci ls "<pipeline>" [--closed]               # pull requests and their latest CI run
+pl ci show "<pipeline>" <pr>                   # a pull request and its runs
+pl ci get "<pipeline>#ci<n>"                   # stages and steps; a reused step names its origin
+pl ci logs "<pipeline>#ci<n>/<step>"           # also output, files, file; --follow while running
+pl ci rerun "<pipeline>" <pr>                  # steps that succeeded on the same tree are reused
+pl ci cancel "<pipeline>#ci<n>"
+```
+
+The result also shows on GitHub as the `olve/ci` status of the PR's head. A PR that changes the
+pipeline's definition is tested with its own.
 
 ## Acting
 
