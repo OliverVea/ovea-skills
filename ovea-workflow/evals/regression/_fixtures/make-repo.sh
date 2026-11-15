@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds a throwaway repo for one visual-regression triggering case: a game whose pipeline gates on
-# Olve.VisualRegression. Usage: make-repo.sh [jest]   jest: a web app with Jest snapshots, no VR.
+# Olve.Regression. Usage: make-repo.sh [jest]   jest: a web app with Jest snapshots, no VR.
 set -euo pipefail
 git init -q -b main .
 git config user.email eval@example.invalid
@@ -30,12 +30,12 @@ export default pipeline({ name: "Game", description: "Build, test, visual review
   .stage(build).stage(test).stage(visualReview).stage(publish);
 T
   cat > .pipelines/steps/visual-review.ts <<'T'
-// Submits the test step's screenshots to Olve.VisualRegression from its preflight (vr submit
+// Submits the test step's screenshots to Olve.Regression from its preflight (reg submit
 // --pipeline --supersede) and waits for the verdict; a rejection fails the step.
 export { visualReview } from "./visual-review-impl";
 T
   printf 'def test_menu(screenshots):\n    screenshots.capture("burger-menu")\n' > tests/test_menu.py
   printf 'class Game: pass\n' > src/game.py
-  printf '# game\n\nA small game. Screenshots from the integration suite are reviewed in Olve.VisualRegression.\n' > README.md
+  printf '# game\n\nA small game. Screenshots from the integration suite are reviewed in Olve.Regression.\n' > README.md
 fi
 git add -A && git commit -q -m init

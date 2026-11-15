@@ -84,7 +84,7 @@ The web UI is at each URL.
    step (`/docs/pipeline-reference.md#reusable-steps`), not a copy. A deploy step links to what it
    deployed: `link` on its deploy target in the config, or `ctx.link(url, label?)` in a custom
    handler (SDK 2.0.0-beta.27 or later; `pl run get` shows it as `→ <url>`). A step that hands work
-   to another system and waits for its answer (a review tool such as Olve.VisualRegression) is **one
+   to another system and waits for its answer (a review tool such as Olve.Regression) is **one
    step**: an `external(M, { from: [callback()] })` input, and a `preflight` passed to `implement`
    that submits the work with `ctx.inputUrl(step, "<input>")` and `ctx.link`s it (SDK
    2.0.0-beta.35 or later); or `link: { input, path, label }` on the external input to link a value

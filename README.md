@@ -24,8 +24,8 @@ Personal workflow / process skills:
   the `pl` CLI, profiles and user login, `pl wait` instead of poll loops, changing a pipeline
   safely. Points to the instance's `/docs` for reference. Keep it in step with Olve.Pipelines:
   update it whenever a change there alters how an agent should use it.
-- **ovea-visual-regression** — the agent playbook for [Olve.VisualRegression](https://github.com/OliverVea/Olve.VisualRegression):
-  the `vr` CLI, preview runs to check a UI change against the baselines, waiting for a review
+- **ovea-regression** — the agent playbook for [Olve.Regression](https://github.com/OliverVea/Olve.Regression):
+  the `reg` CLI, preview runs to check a UI change against the baselines, waiting for a review
   without reviewing for the owner, and the one-step pipeline gate. Keep it in step with VR.
 - **ovea-ui-mocks** — the mock-first workflow for web UI changes: a standalone HTML mock with fake
   data, approved before the UI is built to match it and approved again, then deleted. Changes to an

@@ -2,7 +2,7 @@ schema_version: "1.1"
 name: n02
 description: "add a test that the header renders"
 tags: [load]
-expected_outcome: "ovea-visual-regression skill is not invoked"
+expected_outcome: "ovea-regression skill is not invoked"
 runs: 3
 context:
   scaffold_script: scaffold.sh
@@ -15,7 +15,7 @@ graders:
   - name: skill-not-loaded
     type: tool_used
     tool: Skill
-    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?ovea-visual-regression"'
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?ovea-regression"'
     min: 0
     max: 0
     arm: both
