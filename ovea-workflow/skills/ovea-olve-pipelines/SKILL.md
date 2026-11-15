@@ -140,7 +140,9 @@ pl ci cancel "<pipeline>#ci<n>"
 ```
 
 The result also shows on GitHub as the `olve/ci` status of the PR's head. A PR that changes the
-pipeline's definition is tested with its own.
+pipeline's definition is tested with its own. Only pull requests by the GitHub logins in the
+instance's `Ci:Authors` get CI; anyone else's (and a fork's) gets no run and no status. A CI step
+can't declare `clusterAccess`.
 
 ## Acting
 
