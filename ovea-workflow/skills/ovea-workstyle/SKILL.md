@@ -1,6 +1,6 @@
 ---
 name: ovea-workstyle
-description: How a piece of work flows in all of Oliver's repos, on every machine — branch off main into a new worktree, let an agent iterate there, squash and rebase, then publish the way the repo's CLAUDE.md says (push to main, or a PR merged after CI) or, when it doesn't say, ask Oliver whether to merge it yourself or let him review all or part of it. Use when starting a task, feature or fix in one of his repos, when handing work to an agent, and before committing, pushing, opening a PR or merging finished work.
+description: How a piece of work flows in all of Oliver's repos, on every machine — branch off main into a new worktree, let an agent iterate there, squash and rebase, then publish the way the repo's CLAUDE.md says (push to main, or a PR with auto-merge) or, when it doesn't say, ask Oliver whether to merge it yourself or let him review all or part of it; a PR lands through auto-merge, watched until it merges. Use when starting a task, feature or fix in one of his repos, when handing work to an agent, and before committing, pushing, opening a PR or merging finished work.
 allowed-tools: Bash Read AskUserQuestion
 ---
 
@@ -33,8 +33,9 @@ repo allows it or Oliver said so for this change.
 3. `git fetch origin && git rebase origin/main`, and re-run the gate if the rebase brought changes.
 4. Publish (below).
 5. When a merge deploys, name the run that carries it (`pl wait push "<pipeline>" <sha>`).
-6. Remove the worktree and its branch: `orca worktree rm --worktree path:<path> --delete-branch`,
-   or `git worktree remove <path> && git branch -D <short-name>` without Orca.
+6. Once the change is on `main` (not before: a stuck PR is fixed from it), remove the worktree and
+   its branch: `orca worktree rm --worktree path:<path> --delete-branch`, or
+   `git worktree remove <path> && git branch -D <short-name>` without Orca.
 
 ## Publish
 
@@ -89,12 +90,37 @@ the policy only on a yes, and land it with the change or as its own commit.
 
 ### Landing it
 
-- **Direct push allowed** (GitHub doesn't require a PR on `main`): `git push origin HEAD:main`.
-- **PRs required:** open a PR, wait for its checks (`gh pr checks <n> --watch`, or the repo's gate
-  when GitHub runs none), then merge it yourself with the method the repo allows (squash, or rebase
-  where squash is off). Never use `--admin` or another bypass: if GitHub still refuses, report it.
-  If a check fails, fix it, push the fix to the branch and wait again. Don't merge a red PR.
+- **The policy says push to `main`** (and GitHub doesn't require a PR): `git push origin HEAD:main`.
+- **Otherwise, a PR with auto-merge.** Open the PR (*Opening a PR*) and turn on auto-merge right
+  away: `gh pr merge <n> --auto --rebase` (`--squash` where rebase is off). Auto-merge means "merge
+  when it's green": GitHub, or the repo's merge queue, lands it once the required checks pass. Then
+  watch it (next section). Never use `--admin` or another bypass.
+- If GitHub refuses auto-merge (off in the repo settings, or `main` requires no checks), say so,
+  wait for the checks (`gh pr checks <n> --watch`, or the repo's gate when GitHub runs none) and
+  merge it yourself. Don't merge a red PR.
+- Auto-merge is the same decision as merging: turn it on only when the policy or Oliver lets you
+  land the change. A PR waiting for his review gets it only once he approves.
 - No merge commits, and never rewrite history that has been pushed to `main`.
+
+### Watching a PR until it lands
+
+After turning on auto-merge, watch the PR with the `ovea-watch-prs` skill (Monitor, re-armed when it
+expires) until it is merged or closed, for at most 12 hours. Its "don't push in response" rule doesn't
+apply here: landing this PR is your task. When it is stuck, fix it:
+
+- **A check failed, or the merge queue removed it:** fix it in the worktree, push to the branch.
+  A push takes a PR out of an Olve.Pipelines merge queue, and the queue only enqueues when
+  auto-merge is turned *on*, so turn it off and on again (`gh pr merge <n> --disable-auto`, then
+  `--auto`).
+- **Conflicts with `main`:** `git fetch origin && git rebase origin/main`, re-run the gate,
+  `git push --force-with-lease`, and re-enable auto-merge the same way.
+- **A review comment or a question:** answer it, or fix what it asks for.
+- **Something you can't fix** (a broken runner, an outage, a decision for Oliver): say so and leave
+  it.
+
+Don't wait for the merge. If there is more work, carry on with it while the watcher runs. If there
+isn't, stop and let its notifications wake you. After 12 hours without a merge, stop watching and
+report where the PR is.
 
 ### Opening a PR
 

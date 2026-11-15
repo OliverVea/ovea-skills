@@ -32,7 +32,7 @@ Personal workflow / process skills:
   approved screen are specimen pages; the mock is the implementation's scope.
 - **ovea-workstyle** — how a piece of work flows in every repo, on every machine: branch off
   `main` into a new worktree, an agent iterates there, then squash and rebase. It publishes as the
-  repo's `CLAUDE.md` says (push to `main`, or a PR merged after CI) or, when the repo doesn't say,
+  repo's `CLAUDE.md` says (push to `main`, or a PR with auto-merge, watched until it lands) or, when the repo doesn't say,
   asks whether to merge it or have Oliver review all or part of it.
 - **ovea-watch-prs** — subscribe to GitHub PR activity (comments, inline review
   comments, reviews, your own unsubmitted drafts, pushes, state changes, CI checks)
