@@ -152,6 +152,14 @@ pipeline's definition is tested with its own. Only pull requests by the GitHub l
 instance's `Ci:Authors` get CI; anyone else's (and a fork's) gets no run and no status. A CI step
 can't declare `clusterAccess`.
 
+A PR's CI can deploy a **preview** (SDK 2.0.0-beta.40 or later): its deploy steps declare
+`reuse: false` and sit under `.when({ kind: "pull" }, …)`, and `checks().onClose(…)` removes it in
+a close run (`kind: "close"`) once the PR closes or merges. A reused CI step may not read
+`input.pull`. Deploy previews with a pipeline secret scoped to the preview namespace, never with
+`clusterAccess` or CD credentials. `olve/preview` on the PR says where the preview is; it is not a
+gate, so don't wait on it to merge. A preview whose teardown keeps failing shows in
+`pl binding status`.
+
 ## Acting
 
 - **Deploy** = push to the bound branch (rule 5), or `pl trigger "<pipeline>" --field k=v`.
