@@ -109,11 +109,9 @@ expires) until it is merged or closed, for at most 12 hours. Its "don't push in 
 apply here: landing this PR is your task. When it is stuck, fix it:
 
 - **A check failed, or the merge queue removed it:** fix it in the worktree, push to the branch.
-  A push takes a PR out of an Olve.Pipelines merge queue, and the queue only enqueues when
-  auto-merge is turned *on*, so turn it off and on again (`gh pr merge <n> --disable-auto`, then
-  `--auto`).
+  Auto-merge stays on, and an Olve.Pipelines merge queue takes the new head again by itself.
 - **Conflicts with `main`:** `git fetch origin && git rebase origin/main`, re-run the gate,
-  `git push --force-with-lease`, and re-enable auto-merge the same way.
+  `git push --force-with-lease`.
 - **A review comment or a question:** answer it, or fix what it asks for.
 - **Something you can't fix** (a broken runner, an outage, a decision for Oliver): say so and leave
   it.
